@@ -6,7 +6,7 @@ from tqdm import tqdm
 from torch.optim import Adam
 from torchvision.transforms import ToTensor
 import statistics as stats
-import models
+from model import models
 from pathlib import Path
 
 

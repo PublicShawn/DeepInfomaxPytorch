@@ -1,8 +1,8 @@
 import torch
-import models
+from model import models
 from pathlib import Path
 from torchvision.datasets.cifar import CIFAR10
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor, ToPILImage
 from tqdm import tqdm
 import random
