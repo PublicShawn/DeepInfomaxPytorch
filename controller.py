@@ -34,7 +34,7 @@ class Controller(object):
             self.loss_fn.load_state_dict(torch.load(str(loss_file)))
 
     def build_test(self):
-        self.classifier = LatentDIM(self.encoder).to(self.config.device)
+        self.classifier = LatentDIM(self.encoder, self.config.hashbit).to(self.config.device)
         self.clsoptim = Adam(self.classifier.parameters(), lr=1e-4)
         self.clscriterion = torch.nn.CrossEntropyLoss()
 

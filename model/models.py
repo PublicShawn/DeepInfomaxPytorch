@@ -77,9 +77,9 @@ class PriorDiscriminator(nn.Module):
 
 
 class Classifier(nn.Module):
-    def __init__(self):
+    def __init__(self, hashbit):
         super().__init__()
-        self.l1 = nn.Linear(64, 15)
+        self.l1 = nn.Linear(hashbit, 15)
         self.bn1 = nn.BatchNorm1d(15)
         self.l2 = nn.Linear(15, 10)
         self.bn2 = nn.BatchNorm1d(10)
