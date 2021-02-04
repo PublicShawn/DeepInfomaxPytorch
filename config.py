@@ -8,8 +8,8 @@ class ConfigParser(object):
         self.parser.add_argument('--device', default="cuda", type=str)
         self.parser.add_argument('--modelroot', default="checkpoint", type=str)
         self.parser.add_argument('--dataroot', default="data", type=str)
-        self.parser.add_argument('--epochrestart', default=0, type=int)
-        self.parser.add_argument('--saveepoch', default=10, type=int)
+        self.parser.add_argument('--epochrestart', default=None, type=int)
+        self.parser.add_argument('--saveepoch', default=1, type=int)
         self.parser.add_argument('--epochs', default=10, type=int)
         self.parser.add_argument('--dataset', default="cifar10", type=str)
 

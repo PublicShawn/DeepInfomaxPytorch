@@ -14,7 +14,7 @@ class Controller(object):
         self.config = config.get()
         if self.config.dataset is None:
             raise FileNotFoundError("missing dataset")
-        self.datasetmanager = DataLoadingManager(self.config.dataset, self.config.dataroot, 0.2)
+        self.datasetmanager = DataLoadingManager(self.config.dataset, self.config.dataroot, self.config.batch_size, 0.2)
         self.dataset = self.datasetmanager()
 
     def build_train(self):
@@ -23,7 +23,7 @@ class Controller(object):
         self.optim = Adam(self.encoder.parameters(), lr=1e-4)
         self.loss_optim = Adam(self.loss_fn.parameters(), lr=1e-4)
 
-        epoch_restart = 0 if self.config.epochrestart is None else self.config.epochrestart
+        epoch_restart = self.config.epochrestart
         modelroot = None if not self.config.modelroot else self.config.modelroot
 
         if epoch_restart is not None and modelroot is not None:
@@ -39,12 +39,12 @@ class Controller(object):
 
 
     def train(self):
+        print("start training......")
+        batch_size = self.config.batch_size
         epoch_restart = 0 if self.config.epochrestart is None else self.config.epochrestart
         modelroot = None if not self.config.modelroot else self.config.modelroot
-        batch_size = self.config.batch_size
-
         for epoch in range(epoch_restart + 1, self.config.epochs):
-            batch = tqdm(self.dataset.train, total=len(self.dataset.train) // batch_size)
+            batch = tqdm(self.dataset.train, total=self.dataset.train_sz // batch_size)
             train_loss = []
             for x, target in batch:
                 x = x.to(self.config.device)
@@ -71,12 +71,14 @@ class Controller(object):
 
 
     def test(self):
+        print("start testing......")
         batch_size = self.config.batch_size
         for epoch in range(self.config.epochs):
 
             ll = []
-            batch = tqdm(self.dataset.train, total=len(self.dataset.train) // batch_size)
+            batch = tqdm(self.dataset.train, total=self.dataset.train_sz // batch_size)
             for x, target in batch:
+
                 x = x.to(self.config.device)
                 target = target.to(self.config.device)
 
@@ -89,7 +91,7 @@ class Controller(object):
                 self.clsoptim.step()
 
             confusion = torch.zeros(self.dataset.num_classes, self.dataset.num_classes)
-            batch = tqdm(self.dataset.test, total=len(self.dataset.test) // batch_size)
+            batch = tqdm(self.dataset.test, total=self.dataset.test_sz // batch_size )
             ll = []
             for x, target in batch:
                 x = x.to(self.config.device)
