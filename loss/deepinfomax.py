@@ -5,11 +5,11 @@ import torch.nn.functional as F
 
 
 class DeepInfoMaxLoss(nn.Module):
-    def __init__(self, alpha=0.5, beta=1.0, gamma=0.1):
+    def __init__(self, hashbit, alpha=0.5, beta=1.0, gamma=0.1):
         super().__init__()
-        self.global_d = GlobalDiscriminator()
-        self.local_d = LocalDiscriminator()
-        self.prior_d = PriorDiscriminator()
+        self.global_d = GlobalDiscriminator(hashbit)
+        self.local_d = LocalDiscriminator(hashbit)
+        self.prior_d = PriorDiscriminator(hashbit)
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma

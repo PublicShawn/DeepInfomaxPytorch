@@ -7,7 +7,7 @@ from pathlib import Path
 import torch
 from dataset.DataLoadingManager import DataLoadingManager
 import statistics as stats
-from utils.funcs import precision
+from utils.funcs import precision, compute_result, CalcTopMap, one_hot_embedding
 
 class Controller(object):
     def __init__(self, config):
@@ -18,8 +18,9 @@ class Controller(object):
         self.dataset = self.datasetmanager()
 
     def build_train(self):
-        self.encoder = Encoder().to(self.config.device)
-        self.loss_fn = DeepInfoMaxLoss().to(self.config.device)
+        self.encoder = Encoder(self.config.hashbit).to(self.config.device)
+        self.loss_fn = DeepInfoMaxLoss(self.config.hashbit).to(self.config.device)
+        self.quant_lossfn = torch.nn.MSELoss()
         self.optim = Adam(self.encoder.parameters(), lr=1e-4)
         self.loss_optim = Adam(self.loss_fn.parameters(), lr=1e-4)
 
@@ -46,6 +47,8 @@ class Controller(object):
         for epoch in range(epoch_restart + 1, self.config.epochs):
             batch = tqdm(self.dataset.train, total=self.dataset.train_sz // batch_size)
             train_loss = []
+            quant_train_loss = []
+
             for x, target in batch:
                 x = x.to(self.config.device)
 
@@ -55,11 +58,19 @@ class Controller(object):
                 # rotate images to create pairs for comparison
                 M_prime = torch.cat((M[1:], M[0].unsqueeze(0)), dim=0)
                 loss = self.loss_fn(y, M, M_prime)
+                quant_loss = self.quant_lossfn(y, torch.sign(y).detach())
                 train_loss.append(loss.item())
-                batch.set_description(str(epoch) + ' Loss: ' + str(stats.mean(train_loss[-20:])))
+                quant_train_loss.append(quant_loss.item())
+                batch.set_description(str(epoch) + 'DIM Loss: ' + str(stats.mean(train_loss[-20:])) + " Q Loss" + str(stats.mean(quant_train_loss[-20:])))
+                quant_loss.backward(retain_graph=True)
                 loss.backward()
+
                 self.optim.step()
                 self.loss_optim.step()
+            mAp = self.evalmap()
+            print("epoch:%d, bit:%d, dataset:%s, MAP:%.3f" % (
+                epoch + 1, self.config.hashbit, self.config.dataset, mAp))
+            print()
 
             if epoch % self.config.saveepoch == 0:
                 modelrootpath = Path(modelroot)
@@ -68,6 +79,18 @@ class Controller(object):
                 enc_file.parent.mkdir(parents=True, exist_ok=True)
                 torch.save(self.encoder.state_dict(), str(enc_file))
                 torch.save(self.loss_fn.state_dict(), str(loss_file))
+
+    def evalmap(self):
+        # print("calculating test binary code......")
+        tst_binary, tst_label = compute_result(self.dataset.test, self.encoder, device=self.config.device)
+
+        # print("calculating dataset binary code.......")\
+        trn_binary, trn_label = compute_result(self.dataset.train, self.encoder, device=self.config.device)
+
+        # print("calculating map.......")
+        mAP = CalcTopMap(trn_binary.numpy(), tst_binary.numpy(), one_hot_embedding(trn_label.numpy(), self.dataset.num_classes), one_hot_embedding(tst_label.numpy(), self.dataset.num_classes),
+                         self.config.topK)
+        return mAP
 
 
     def test(self):

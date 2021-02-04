@@ -12,6 +12,8 @@ class ConfigParser(object):
         self.parser.add_argument('--saveepoch', default=1, type=int)
         self.parser.add_argument('--epochs', default=10, type=int)
         self.parser.add_argument('--dataset', default="cifar10", type=str)
+        self.parser.add_argument('--hashbit', default=64, type=int)
+        self.parser.add_argument('--topK', default=1, type=int)
 
     def get(self):
         return self.parser.parse_args()
