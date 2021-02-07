@@ -27,7 +27,7 @@ class Encoder(nn.Module):
         h = F.relu(self.b3(self.c3(h)))
 
         encoded = self.l1(h.view(x.shape[0], -1))
-        encoded = self.act(encoded)
+        encoded = torch.tanh(encoded)
         return encoded, features
 
 
