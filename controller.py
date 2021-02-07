@@ -44,16 +44,20 @@ class Controller(object):
         batch_size = self.config.batch_size
         epoch_restart = 0 if self.config.epochrestart is None else self.config.epochrestart
         modelroot = None if not self.config.modelroot else self.config.modelroot
+        print("size", len(self.dataset.train), len(self.dataset.retrieve), len(self.dataset.query))
+
         for epoch in range(epoch_restart, self.config.epochs):
             batch = tqdm(self.dataset.train, total=self.dataset.train_sz // batch_size)
             train_loss = []
             quant_train_loss = []
-
-
+            cat = None
 
             for x, target in batch:
                 x = x.to(self.config.device)
-
+                if cat is None:
+                    cat = target
+                else:
+                    cat = torch.cat([cat, target])
                 self.optim.zero_grad()
                 self.loss_optim.zero_grad()
                 y, M = self.encoder(x)
@@ -69,7 +73,6 @@ class Controller(object):
 
                 self.optim.step()
                 self.loss_optim.step()
-
             mAp = self.evalmap()
 
             print("epoch:%d, bit:%d, dataset:%s, MAP:%.3f" % (
@@ -85,7 +88,7 @@ class Controller(object):
                 torch.save(self.loss_fn.state_dict(), str(loss_file))
 
     def evalmap(self):
-        # print("datasize!!!!!!!!!!!!", len(self.dataset.query), len(self.dataset.retrieve))
+
         # print("calculating test binary code......")
         tst_binary, tst_label = compute_result(self.dataset.query, self.encoder, device=self.config.device)
 
@@ -93,8 +96,11 @@ class Controller(object):
         trn_binary, trn_label = compute_result(self.dataset.retrieve, self.encoder, device=self.config.device)
 
         # print("calculating map.......")
+        # print(tst_binary[:17, :])
+        # print("!!!!!!!!")
+        # print(trn_binary[:17, :])
         mAP = CalcTopMap(trn_binary.numpy(), tst_binary.numpy(), one_hot_embedding(trn_label.numpy(), self.dataset.num_classes), one_hot_embedding(tst_label.numpy(), self.dataset.num_classes),
-                         self.config.topK)
+                         trn_binary.shape[0])
         return mAP
 
 

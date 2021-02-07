@@ -18,7 +18,7 @@ class Encoder(nn.Module):
         self.b1 = nn.BatchNorm2d(128)
         self.b2 = nn.BatchNorm2d(256)
         self.b3 = nn.BatchNorm2d(512)
-
+        self.act = torch.nn.LeakyReLU(0.2)
     def forward(self, x):
         h = F.relu(self.c0(x))
 
@@ -27,7 +27,7 @@ class Encoder(nn.Module):
         h = F.relu(self.b3(self.c3(h)))
 
         encoded = self.l1(h.view(x.shape[0], -1))
-        encoded = torch.tanh(encoded)
+        encoded = self.act(encoded)
         return encoded, features
 
 
