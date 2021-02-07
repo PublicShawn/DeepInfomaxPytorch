@@ -21,7 +21,7 @@ class Controller(object):
         self.encoder = Encoder(self.config.hashbit).to(self.config.device)
         self.loss_fn = DeepInfoMaxLoss(self.config.hashbit).to(self.config.device)
         self.quant_lossfn = torch.nn.MSELoss()
-        self.optim = Adam(self.encoder.parameters(), lr=1e-4)
+        self.optim = Adam(self.encoder.parameters(), lr=1e-2)
         self.loss_optim = Adam(self.loss_fn.parameters(), lr=1e-4)
 
         epoch_restart = self.config.epochrestart
