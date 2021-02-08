@@ -11,6 +11,4 @@ class LatentDIM(torch.nn.Module):
     def forward(self, x):
         z, features = self.encoder(x)
         z = z.detach()
-        # to be sure there is hash
-        z = torch.sign(z).float()
         return self.classifier((z, features))
